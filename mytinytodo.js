@@ -21,7 +21,7 @@ var tabLists = {
 	_alltasks: {},
 	clear: function(){
 		this._lists = {}; this._length = 0; this._order = [];
-		this._alltasks = { id:-1, showCompl:0, sort:3 }; 
+		this._alltasks = { id:-1, showCompl:0, sort:2 }; //XXX changed sort:3 -> sort:1 
 	},
 	length: function(){ return this._length; },
 	exists: function(id){ if(this._lists[id] || id==-1) return true; else return false; },
@@ -807,7 +807,11 @@ function loadTasks(opts)
 	});
 };
 
-
+/*
+This function writes the task row HTML on screen.
+ADD: 2018-06-29 SE
+Additional call to prepareTaskOrderNumber(item), in order to write additional data
+*/
 function prepareTaskStr(item, noteExp)
 {
 	// &mdash; = &#8212; = —
@@ -821,7 +825,7 @@ function prepareTaskStr(item, noteExp)
 		'<div class="task-middle"><div class="task-through-right">'+prepareDuedate(item)+
 		'<span class="task-date-completed"><span title="'+item.dateInlineTitle+'">'+item.dateInline+'</span>&#8212;'+
 		'<span title="'+item.dateCompletedInlineTitle+'">'+item.dateCompletedInline+'</span></span></div>'+"\n"+
-		'<div class="task-through">'+preparePrio(prio,id)+'<span class="task-title">'+prepareHtml(item.title)+'</span> '+
+		'<div class="task-through">'+preparePrio(prio,id) + prepareTaskOrderNumber(item) + '<span class="task-title">'+prepareHtml(item.title)+'</span> '+
 		(curList.id == -1 ? '<span class="task-listname">'+ tabLists.get(item.listId).name +'</span>' : '') +	"\n" +
 		prepareTagsStr(item)+'<span class="task-date">'+item.dateInlineTitle+'</span></div>'+
 		'<div class="task-note-block">'+
@@ -832,6 +836,28 @@ function prepareTaskStr(item, noteExp)
 		'</div>'+
 		"</div></li>\n";
 };
+
+/*
+This function writes a <span> with task-order-number and classes by tag. 
+Classes are used to highlight certain tags with bg-colors. 
+example .tagged-active {background-color: yellow;}
+*/
+function prepareTaskOrderNumber(item)
+{
+    var tagged = "";
+    if(item.tags && !item.tags == '')
+    {
+        var a = item.tags.split(',');
+        if(a.length)
+        {
+            for(var i in a) {
+                tagged += ' tagged-' + a[i];
+            }
+        }
+    }
+    
+    return '<span class="task-order-number ' + tagged + '">'+item.id+'</span>';
+}
 
 
 function prepareHtml(s)
@@ -850,16 +876,20 @@ function preparePrio(prio,id)
 	return '<span class="task-prio '+cl+'">'+v+'</span>';
 };
 
+/*
+Addition to this function in order to add background-colors by tag also on the actual tag-elements.
+Tag gets additional class like; .tagged-active
+*/
 function prepareTagsStr(item)
 {
-	if(!item.tags || item.tags == '') return '';
-	var a = item.tags.split(',');
-	if(!a.length) return '';
-	var b = item.tags_ids.split(',')
-	for(var i in a) {
-		a[i] = '<a href="#" class="tag" tag="'+a[i]+'" tagid="'+b[i]+'">'+a[i]+'</a>';
-	}
-	return '<span class="task-tags">'+a.join(', ')+'</span>';
+    if(!item.tags || item.tags == '') return '';
+    var a = item.tags.split(',');
+    if(!a.length) return '';
+    var b = item.tags_ids.split(',')
+    for(var i in a) {
+        a[i] = '<a href="#" class="tag tagged-'+a[i]+'" tag="'+a[i]+'" tagid="'+b[i]+'">'+a[i]+'</a>';
+    }
+    return '<span class="task-tags">'+a.join(', ')+'</span>';
 };
 
 function prepareTagsClass(ids)
